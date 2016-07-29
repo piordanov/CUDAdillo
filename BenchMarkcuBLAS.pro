@@ -1,7 +1,8 @@
 QT += core
 QT -= gui
 
-CONFIG += c++11
+CONFIG += c++14
+QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.11
 
 TARGET = BenchMarkcuBLAS
 CONFIG += console
@@ -11,7 +12,11 @@ TEMPLATE = app
 
 SOURCES += main.cpp
 
-LIBS += -L/usr/local/lib/ -lbenchmark -larmadillo -pthread
+HEADERS += \
+    helper_cuda.h \
+    armacudawrapper.h
+
+LIBS += -L/usr/local/lib/ -lbenchmark -larmadillo
 
 INCLUDEPATH += /usr/local/include
 DEPENDPATH += /usr/local/include
@@ -19,8 +24,10 @@ DEPENDPATH += /usr/local/include
 macx: QMAKE_CXXFLAGS += -O3 -std=c++14 -stdlib=libc++ -fno-exceptions -fno-rtti -Wall -pedantic -Werror
 
 DISTFILES += \
-    cudautilities.cu
-CUDA_SOURCES += cudautilities.cu # <-- same dir for this small example
+    cudautilities.cu \
+    cudautilities.cuh
+
+CUDA_SOURCES += cudautilities.cu
 
 CUDA_DIR = "/Developer/NVIDIA/CUDA-7.5"
 
@@ -70,11 +77,6 @@ else {
     QMAKE_EXTRA_COMPILERS += cuda
 }
 
-DISTFILES += \
-    cudautilities.cu
-
-HEADERS += \
-    helper_cuda.h
 
 
 
