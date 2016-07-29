@@ -5,3 +5,6 @@ template double * addGPU<double>(double *, double *, int, int);
 
 template float * multGPU<float>(float *, float *, int, int);
 template double * multGPU<double>(double *, double *, int, int);
+
+template float * multGPUcuBLAS<float>(float *, float *, int, int);
+template double * multGPUcuBLAS<double>(double *, double *, int, int);

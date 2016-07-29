@@ -54,6 +54,19 @@ static void BM_matrixMultiplyGPU(benchmark::State& state) {
 }
 BASIC_BENCHMARK_TEST(BM_matrixMultiplyGPU);
 
+static void BM_matrixMultiplyGPUcuBLAS(benchmark::State & state) {
+    int n = int(state.range_x());
+    fmat matA(n,n);
+    matA.fill(5);
+    fmat matB(n,n);
+    matB.fill(7);
+    while (state.KeepRunning())
+        ArmaCudaWrapper::multMatcuBLAS<float>(&matA,&matB);
+}
+
+BASIC_BENCHMARK_TEST(BM_matrixMultiplyGPUcuBLAS);
+
+
 void test_addition()
 {
     mat matA = randu<mat>(4,4);
