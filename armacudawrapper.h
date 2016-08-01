@@ -7,8 +7,6 @@ using namespace arma;
 template <typename T>
 T * addGPU(T *, T *, int, int);
 template <typename T>
-T * multGPU(T *, T *, int, int);
-template <typename T>
 T * multGPUcuBLAS(T *, T *, int, int);
 
 class ArmaCudaWrapper
@@ -24,13 +22,6 @@ public:
 
     template<typename T>
     static Mat<T> * multMat(Mat<T> * A, Mat<T> * B)
-    {
-        T * arr = multGPU<T>(A->memptr(),B->memptr(),A->n_rows,A->n_cols);
-        Mat<T> * result = new Mat<T>(arr,A->n_rows,A->n_cols, true);
-        return result;
-    }
-    template<typename T>
-    static Mat<T> * multMatcuBLAS(Mat<T> * A, Mat<T> * B)
     {
         T * arr = multGPUcuBLAS<T>(A->memptr(),B->memptr(),A->n_rows,A->n_cols);
         Mat<T> * result = new Mat<T>(arr,A->n_rows,A->n_cols, true);

@@ -14,14 +14,15 @@ SOURCES += main.cpp
 
 HEADERS += \
     helper_cuda.h \
-    armacudawrapper.h
+    armacudawrapper.h \
+    json.hpp
 
 LIBS += -L/usr/local/lib/ -lbenchmark -larmadillo
 
 INCLUDEPATH += /usr/local/include
 DEPENDPATH += /usr/local/include
 
-macx: QMAKE_CXXFLAGS += -O3 -std=c++14 -stdlib=libc++ -fno-exceptions -fno-rtti -Wall -pedantic -Werror
+macx: QMAKE_CXXFLAGS += -O3 -std=c++14 -stdlib=libc++ -fno-rtti -Wall -pedantic -Werror
 
 DISTFILES += \
     cudautilities.cu \

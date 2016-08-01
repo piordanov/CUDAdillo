@@ -128,7 +128,7 @@ void _gpu_blas_mmul<float>(const float *A, const float *B, float * C, const int 
     cudaDeviceSynchronize();
     if(stat != CUBLAS_STATUS_SUCCESS)
     {
-        printf("Dgemm failed");
+        printf("Dgemm failed with error code: %d\n", stat);
     }
 
     cublasXtDestroy(handle);
@@ -153,7 +153,7 @@ void _gpu_blas_mmul<double>(const double *A, const double *B, double * C, const 
     cudaDeviceSynchronize();
     if(stat != CUBLAS_STATUS_SUCCESS)
     {
-        printf("Dgemm failed");
+        printf("Dgemm failed with error code: %d", stat);
     }
 
     cublasXtDestroy(handle);

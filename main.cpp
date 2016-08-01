@@ -1,12 +1,15 @@
 #include <armadillo>
 #include <benchmark/benchmark_api.h>
 #include <chrono>
+#include "json.hpp"
+#include <sstream>
 #include "armacudawrapper.h"
 
 using namespace arma;
+using json = nlohmann::json;
 
 #define BASIC_BENCHMARK_TEST(x) \
-    BENCHMARK(x)->Arg(8)->Arg(512)->Arg(4000)->Unit(benchmark::kMillisecond)
+    BENCHMARK(x)->Range(64,8<<10)->Unit(benchmark::kNanosecond)
 
 static void BM_matrixAdditionCPU(benchmark::State& state) {
     int n = int(state.range_x());
@@ -42,35 +45,34 @@ static void BM_matrixMultiplyCPU(benchmark::State& state) {
 }
 BASIC_BENCHMARK_TEST(BM_matrixMultiplyCPU);
 
-
-static void BM_matrixMultiplyGPU(benchmark::State& state) {
+static void BM_matrixMultiplyGPU(benchmark::State & state) {
     int n = int(state.range_x());
     fmat matA(n,n);
     matA.fill(5);
     fmat matB(n,n);
     matB.fill(7);
     while (state.KeepRunning())
-        ArmaCudaWrapper::multMat<float>(&matA,&matB);
+    {
+        auto * result = ArmaCudaWrapper::multMat<float>(&matA,&matB);
+        free(result);
+    }
 }
+
 BASIC_BENCHMARK_TEST(BM_matrixMultiplyGPU);
 
-static void BM_matrixMultiplyGPUcuBLAS(benchmark::State & state) {
-    int n = int(state.range_x());
-    fmat matA(n,n);
-    matA.fill(5);
-    fmat matB(n,n);
-    matB.fill(7);
-    while (state.KeepRunning())
-        ArmaCudaWrapper::multMatcuBLAS<float>(&matA,&matB);
+template <typename T>
+void setupMat(Mat<T> * A, int size, int offset)
+{
+    for(int i = 0; i < size; i++)
+        A->at(i) = i + offset;
 }
-
-BASIC_BENCHMARK_TEST(BM_matrixMultiplyGPUcuBLAS);
-
 
 void test_addition()
 {
-    mat matA = randu<mat>(4,4);
-    mat matB = randu<mat>(4,4);
+    mat matA = mat(4,4);
+    setupMat(&matA, 16, 1);
+    mat matB = mat(4,4);
+    setupMat(&matB, 16, 1);
 
     mat cpuSum = matA + matB;
     mat * gpuSum = ArmaCudaWrapper::addMat<double>(&matA,&matB);
@@ -92,10 +94,10 @@ void test_addition()
 
 void test_multiply()
 {
-    mat matA = randu<mat>(4,4);
-    mat matB = randu<mat>(4,4);
+    mat matA = randu<mat>(5,5);
+    mat matB = randu<mat>(5,5);
 
-    mat cpuMult = matA + matB;
+    mat cpuMult = matA * matB;
     mat * gpuMult = ArmaCudaWrapper::multMat<double>(&matA,&matB);
     bool same = approx_equal(cpuMult, *gpuMult,"absdiff", 0.01);
     printf("Multiplication approx-equal: %s\n", same ? "true" : "false");
@@ -116,15 +118,24 @@ void test_multiply()
 
 int main(int argc, char *argv[])
 {
-//    std::ofstream benchmarks("benchmark.json");
-//    std::streambuf *coutbuf = std::cout.rdbuf();
-//    std::cout.rdbuf(benchmarks.rdbuf());
+    std::stringstream benchmarks;
+    std::streambuf *coutbuf = std::cout.rdbuf();
+    std::cout.rdbuf(benchmarks.rdbuf());
 
     ::benchmark::Initialize(&argc, argv);
     ::benchmark::RunSpecifiedBenchmarks();
 
+    std::cout.rdbuf(coutbuf);
+
     test_addition();
     test_multiply();
 
-//    std::cout.rdbuf(coutbuf);
+    auto j =  json::parse(benchmarks.str());
+    auto benchmks = j["benchmarks"];
+
+    for (json::iterator it = benchmks.begin(); it != benchmks.end(); ++it) {
+      std::cout << *it << '\n';
+    }
+
+
 }
