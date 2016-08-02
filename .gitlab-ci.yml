@@ -10,4 +10,4 @@ Test:
   stage: test
   script: 
   -  '/usr/local/Qt-5.7.0/bin/qmake -r  "CONFIG+=debug" ./Benchmark.pro'
-  -  './BenchMarkcuBLAS
+  -  './BenchMarkcuBLAS'
