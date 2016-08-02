@@ -1,0 +1,34 @@
+before_script:
+  - 'export PATH=/usr/local/Qt-5.7.0/bin:$PATH'
+  - 'export LD_LIBRARY_PATH=/usr/lib64/lib:$LD_LIBRARY_PATH'
+Build:
+  stage: build
+  script:
+  -  '/usr/local/Qt-5.7.0/bin/qmake -r  "CONFIG+=debug" ./CISLProj.pro'
+  -  '/usr/bin/make -j'
+Test:
+  stage: test
+  script: 
+  -  '/usr/local/Qt-5.7.0/bin/qmake -r  "CONFIG+=debug" ./CISLProj.pro'
+  -  '/usr/bin/make -j'
+  -  'cd Test/CoreTest/'
+  -  './tst_coretest'
+  -  'cd ../../'
+  -  'cd Test/MetricsTest/'
+  -  './tst_metricstest'
+  -  'cd ../../'
+  -  'cd Test/Benchmarks'
+  -  './tst_benchmarkstest'
+Coverage:
+  stage: test 
+  script:
+  -  '/usr/local/Qt-5.7.0/bin/qmake -r "CONFIG+=debug" ./CISLProj.pro'
+  -  '/usr/bin/make -j'
+  -  './gencoverage'
+  -  'mkdir public'
+  -  'cp -r html/* public'
+  artifacts:
+    name: "$CI_BUILD_REF_NAME"
+    expire_in: 4 weeks
+    paths:
+      - public
