@@ -6,11 +6,11 @@
 
 QT       -= core gui
 
-TARGET = Armuda
+TARGET = CUDAdillo
 TEMPLATE = lib
 CONFIG += staticlib
 
-HEADERS += armuda.h
+HEADERS += cudadillo.h
 unix {
     target.path = /usr/lib
     INSTALLS += target

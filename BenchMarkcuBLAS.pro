@@ -2,6 +2,6 @@ TEMPLATE = subdirs
 
 SUBDIRS += \
     Test \
-    Armuda
+    CUDAdillo
 
-Test.depends = Armuda
+Test.depends = CUDAdillo

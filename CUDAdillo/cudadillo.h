@@ -9,7 +9,7 @@ T * addGPU(T *, T *, int, int);
 template <typename T>
 T * multGPUcuBLAS(T *, T *, int, int);
 
-class Armuda
+class CUDAdillo
 {
 public:
     template<typename T>
@@ -29,7 +29,7 @@ public:
     }
 
 private:
-    Armuda(){}
+    CUDAdillo(){}
 };
 
 #endif // ARMUDA_H
