@@ -4,31 +4,10 @@ before_script:
 Build:
   stage: build
   script:
-  -  '/usr/local/Qt-5.7.0/bin/qmake -r  "CONFIG+=debug" ./CISLProj.pro'
+  -  '/usr/local/Qt-5.7.0/bin/qmake -r  "CONFIG+=debug" ./BenchMarkcuBLAS.pro'
   -  '/usr/bin/make -j'
 Test:
   stage: test
   script: 
-  -  '/usr/local/Qt-5.7.0/bin/qmake -r  "CONFIG+=debug" ./CISLProj.pro'
-  -  '/usr/bin/make -j'
-  -  'cd Test/CoreTest/'
-  -  './tst_coretest'
-  -  'cd ../../'
-  -  'cd Test/MetricsTest/'
-  -  './tst_metricstest'
-  -  'cd ../../'
-  -  'cd Test/Benchmarks'
-  -  './tst_benchmarkstest'
-Coverage:
-  stage: test 
-  script:
-  -  '/usr/local/Qt-5.7.0/bin/qmake -r "CONFIG+=debug" ./CISLProj.pro'
-  -  '/usr/bin/make -j'
-  -  './gencoverage'
-  -  'mkdir public'
-  -  'cp -r html/* public'
-  artifacts:
-    name: "$CI_BUILD_REF_NAME"
-    expire_in: 4 weeks
-    paths:
-      - public
+  -  '/usr/local/Qt-5.7.0/bin/qmake -r  "CONFIG+=debug" ./Benchmark.pro'
+  -  './BenchMarkcuBLAS
