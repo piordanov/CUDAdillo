@@ -1,7 +1,6 @@
 #ifndef ARMUDA_H
 #define ARMUDA_H
 
-
 #include <armadillo>
 using namespace arma;
 
