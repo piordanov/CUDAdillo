@@ -17,6 +17,7 @@ public:
     {
         T * arr = addGPU<T>(A->memptr(),B->memptr(),A->n_rows,A->n_cols);
         Mat<T> * result = new Mat<T>(arr,A->n_rows,A->n_cols, true);
+        free(arr);
         return result;
     }
 
@@ -25,6 +26,7 @@ public:
     {
         T * arr = multGPUcuBLAS<T>(A->memptr(),B->memptr(),A->n_rows,A->n_cols);
         Mat<T> * result = new Mat<T>(arr,A->n_rows,A->n_cols, true);
+        free(arr);
         return result;
     }
 
