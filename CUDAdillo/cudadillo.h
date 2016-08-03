@@ -8,6 +8,8 @@ template <typename T>
 T * addGPU(T *, T *, int, int);
 template <typename T>
 T * multGPUcuBLAS(T *, T *, int, int);
+template <typename T>
+T * transposeGPUcuBLAS(T *, int, int);
 
 class CUDAdillo
 {
@@ -26,6 +28,15 @@ public:
     {
         T * arr = multGPUcuBLAS<T>(A->memptr(),B->memptr(),A->n_rows,A->n_cols);
         Mat<T> * result = new Mat<T>(arr,A->n_rows,A->n_cols, true);
+        free(arr);
+        return result;
+    }
+
+    template<typename T>
+    static Mat<T> * transposeMat(Mat<T> * M)
+    {
+        T * arr = transposeGPUcuBLAS<T>(M->memptr(),M->n_rows, M->n_cols);
+        Mat<T> * result = new Mat<T>(arr,M->n_rows,M->n_cols, true);
         free(arr);
         return result;
     }

@@ -11,7 +11,7 @@ A static c++ library to complete basic matrix operations on Armadillo matrices w
 ```
 macx{
     LIBS += -L/Developer/NVIDIA/CUDA-7.5/lib/ -lcudart -lcublas
-    LIBS += $$PWD/../../Libraries/libCUDAdillo.
+    LIBS += $$PWD/../../Libraries/libCUDAdillo.a
 }
 ```
 
@@ -31,6 +31,7 @@ mat * mult = CUDAdillo::multMat<double>(&matA, &matB);
 
 delete sum;
 delete mult;
-//Note that these functions allocate memory to create these new matrices, so they must be freed by the user
 ```
+
+Note that these functions allocate heap memory to create these new matrices, so they **must be freed by the user**.
 

@@ -10,7 +10,7 @@ using namespace arma;
 using json = nlohmann::json;
 
 #define BASIC_BENCHMARK_TEST(x) \
-    BENCHMARK(x)->Arg(8<<10)->Unit(benchmark::kNanosecond)
+    BENCHMARK(x)->Range(512,8<<10)->Unit(benchmark::kMillisecond)
 
 static void BM_matrixAdditionCPU(benchmark::State& state) {
     int n = int(state.range_x());
@@ -57,8 +57,28 @@ static void BM_matrixMultiplyGPU(benchmark::State & state) {
         CUDAdillo::multMat<float>(&matA,&matB);
     }
 }
-
 BASIC_BENCHMARK_TEST(BM_matrixMultiplyGPU);
+
+static void BM_matrixTransposeCPU(benchmark::State & state) {
+    int n = int(state.range_x());
+    fmat matA = randu<fmat>(n,n);
+    while(state.KeepRunning())
+    {
+        fmat temp = matA.t();
+    }
+}
+BASIC_BENCHMARK_TEST(BM_matrixTransposeCPU);
+
+static void BM_matrixTransposeGPU(benchmark::State & state) {
+    int n = int(state.range_x());
+    fmat matA = randu<fmat>(n,n);
+    while(state.KeepRunning())
+    {
+        CUDAdillo::transposeMat<float>(&matA);
+    }
+}
+BASIC_BENCHMARK_TEST(BM_matrixTransposeGPU);
+
 
 template <typename T>
 void setupMat(Mat<T> * A, int size, int offset)
@@ -112,6 +132,27 @@ void test_multiply()
     }
     delete gpuMult;
 }
+
+void test_transpose()
+{
+    mat m = randu<mat>(5,5);
+
+    mat cpuT = m.t();
+    mat * gpuT = CUDAdillo::transposeMat<double>(&m);
+    bool same = approx_equal(cpuT, *gpuT,"absdiff", 0.01);
+    printf("Transpose approx-equal: %s\n", same ? "success" : "failure");
+    if(!same){
+        printf("M:\n");
+        m.print();
+
+        printf("\nCPU Output:\n");
+        cpuT.print();
+        printf("\nGPU Output:\n");
+        gpuT->print();
+    }
+    delete gpuT;
+}
+
 bool contains(std::string s, std::string c){
     return s.find(c) != std::string::npos;
 }
@@ -129,33 +170,34 @@ int main(int argc, char *argv[])
 
     test_addition();
     test_multiply();
+    test_transpose();
 
     std::cout << benchmarks.str();
 
-//    auto j =  json::parse(benchmarks.str());
-//    auto benchmks = j["benchmarks"];
+    //    auto j =  json::parse(benchmarks.str());
+    //    auto benchmks = j["benchmarks"];
 
-//    std::string bestAdd, bestMul;
-//    long long mintimeAdd = std::numeric_limits<int>::max();
-//    long long mintimeMul = std::numeric_limits<int>::max();
+    //    std::string bestAdd, bestMul;
+    //    long long mintimeAdd = std::numeric_limits<int>::max();
+    //    long long mintimeMul = std::numeric_limits<int>::max();
 
-//    for (json::iterator it = benchmks.begin(); it != benchmks.end(); ++it) {
-//        long long time = (*it)["real_time"];
-//        std::string name = (*it)["name"];
-//        if(contains(name,"Addition") && (time < mintimeAdd)) {
-//            bestAdd = name;
-//            mintimeAdd = time;
-//        }
-//        if(contains(name,"Multiply") && (time < mintimeMul)) {
-//            bestMul = name;
-//            mintimeMul = time;
-//        }
+    //    for (json::iterator it = benchmks.begin(); it != benchmks.end(); ++it) {
+    //        long long time = (*it)["real_time"];
+    //        std::string name = (*it)["name"];
+    //        if(contains(name,"Addition") && (time < mintimeAdd)) {
+    //            bestAdd = name;
+    //            mintimeAdd = time;
+    //        }
+    //        if(contains(name,"Multiply") && (time < mintimeMul)) {
+    //            bestMul = name;
+    //            mintimeMul = time;
+    //        }
 
-//    }
-//    std::cout << bestAdd << " had best time of " << mintimeAdd / 1e+9 << "secs\n";
-//    std::cout << bestMul << " had best time of " << mintimeMul / 1e+9 << "secs\n";
-//    std::cout << "Benchmarks output:\n\n";
-//    std::cout << benchmks.dump(4) << std::endl;
+    //    }
+    //    std::cout << bestAdd << " had best time of " << mintimeAdd / 1e+9 << "secs\n";
+    //    std::cout << bestMul << " had best time of " << mintimeMul / 1e+9 << "secs\n";
+    //    std::cout << "Benchmarks output:\n\n";
+    //    std::cout << benchmks.dump(4) << std::endl;
 
 
 }
