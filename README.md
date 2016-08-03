@@ -1,6 +1,6 @@
 ## CUDAdillo
 
-A static c++ library to do basic matrix operations on Armadillo matrices with the intent to speed up runtime with GPU cores with the use of the CUDA and cuBLAS libraries.
+A static c++ library to complete basic matrix operations on Armadillo matrices with the intent to speed up runtime through the use of the CUDA and cuBLAS GPU libraries.
 
 ###Qt Creator Integration
 
