@@ -79,6 +79,28 @@ static void BM_matrixTransposeGPU(benchmark::State & state) {
 }
 BASIC_BENCHMARK_TEST(BM_matrixTransposeGPU);
 
+static void BM_matrixCovCPU(benchmark::State & state) {
+    int n = int(state.range_x());
+    fmat matA = randu<fmat>(n,n);
+    fmat matB = randu<fmat>(n,n);
+    while(state.KeepRunning())
+    {
+        fmat temp = matA * matB.t();
+    }
+}
+BASIC_BENCHMARK_TEST(BM_matrixCovCPU);
+
+static void BM_matrixCovGPU(benchmark::State & state) {
+    int n = int(state.range_x());
+    fmat matA = randu<fmat>(n,n);
+    fmat matB = randu<fmat>(n,n);
+    while(state.KeepRunning())
+    {
+        CUDAdillo::covMat<float>(&matA,&matB);
+    }
+}
+BASIC_BENCHMARK_TEST(BM_matrixCovGPU);
+
 
 template <typename T>
 void setupMat(Mat<T> * A, int size, int offset)
@@ -135,7 +157,7 @@ void test_multiply()
 
 void test_transpose()
 {
-    mat m = randu<mat>(5,5);
+    mat m = randu<mat>(5,6);
 
     mat cpuT = m.t();
     mat * gpuT = CUDAdillo::transposeMat<double>(&m);
@@ -153,26 +175,50 @@ void test_transpose()
     delete gpuT;
 }
 
+void test_cov()
+{
+    mat mA = randu<mat>(5,5);
+    mat mB = randu<mat>(5,5);
+
+    mat mcov = mA * mB.t();
+    mat * gpucov = CUDAdillo::covMat(&mA, &mB);
+    bool same = approx_equal(mcov, *gpucov,"absdiff", 0.01);
+    printf("Covariance approx-equal: %s\n", same ? "success" : "failure");
+    if(!same){
+        printf("A:\n");
+        mA.print();
+        printf("\nB:\n");
+        mB.print();
+
+        printf("\nCPU Output:\n");
+        mcov.print();
+        printf("\nGPU Output:\n");
+        gpucov->print();
+    }
+    delete gpucov;
+}
+
 bool contains(std::string s, std::string c){
     return s.find(c) != std::string::npos;
 }
 
 int main(int argc, char *argv[])
 {
-    std::stringstream benchmarks;
-    std::streambuf *coutbuf = std::cout.rdbuf();
-    std::cout.rdbuf(benchmarks.rdbuf());
+//    std::stringstream benchmarks;
+//    std::streambuf *coutbuf = std::cout.rdbuf();
+//    std::cout.rdbuf(benchmarks.rdbuf());
 
     ::benchmark::Initialize(&argc, argv);
     ::benchmark::RunSpecifiedBenchmarks();
 
-    std::cout.rdbuf(coutbuf);
+//    std::cout.rdbuf(coutbuf);
+//    std::cout << benchmarks.str();
 
     test_addition();
     test_multiply();
     test_transpose();
+    test_cov();
 
-    std::cout << benchmarks.str();
 
     //    auto j =  json::parse(benchmarks.str());
     //    auto benchmks = j["benchmarks"];

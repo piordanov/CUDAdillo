@@ -1,5 +1,5 @@
-#ifndef ARMUDA_H
-#define ARMUDA_H
+#ifndef CUDADILLO_H
+#define CUDADILLO_H
 
 #include <armadillo>
 using namespace arma;
@@ -10,6 +10,8 @@ template <typename T>
 T * multGPUcuBLAS(T *, T *, int, int);
 template <typename T>
 T * transposeGPUcuBLAS(T *, int, int);
+template<typename T>
+T * covGPUcuBLAS(T *, T *, int, int);
 
 class CUDAdillo
 {
@@ -41,8 +43,17 @@ public:
         return result;
     }
 
+    template<typename T>
+    static Mat<T> * covMat(Mat<T> * A, Mat<T> * B)
+    {
+        T * arr = covGPUcuBLAS<T>(A->memptr(), B->memptr(), A->n_rows,A->n_cols);
+        Mat<T> * result = new Mat<T>(arr, A->n_rows, A->n_cols, true);
+        free(arr);
+        return result;
+    }
+
 private:
     CUDAdillo(){}
 };
 
-#endif // ARMUDA_H
+#endif // CUDADILLO_H

@@ -3,7 +3,7 @@
 A static c++ library to complete basic matrix operations on Armadillo matrices with the intent to speed up runtime through the use of the CUDA and cuBLAS GPU libraries.
 
 ###Qt Creator Integration
-
+-----
 - Have the `cudadillo.h` file in the same working directory
 - Have the compiled `libCUDAdillo.a` in the project
 - Then include the following in the project's .pro file
@@ -22,16 +22,32 @@ macx{
 ```
 
 ###Examples
+-----
 ```cpp
 mat matA = randu<mat>(5,5);
 mat matB = randu<mat>(5,5);
 
-mat * sum = CUDAdillo::addMat<double>(&matA, &matB);
-mat * mult = CUDAdillo::multMat<double>(&matA, &matB);
+mat * sum = CUDAdillo::addMat<double>(&matA, &matB); //equivalent to matA + matB
+mat * mult = CUDAdillo::multMat<double>(&matA, &matB); //equivalent to matA * matB
+mat * trans = CUDAdillo::transposeMat<double>(&matA); // equivalent to matA.t()
+mat * cov = CUDAdillo::covMat<double>(&matA,&matB); //equivalent to matA * matB.t()
 
 delete sum;
 delete mult;
+delete trans;
+delete cov;
 ```
 
-Note that these functions allocate heap memory to create these new matrices, so they **must be freed by the user**.
+Note that these functions allocate heap memory to create these new matrices, so they **must be freed by the user**, and the functions assume that the inputs share the same dimensions.
+
+###References
+-----
+[cuBLAS Documentation](http://docs.nvidia.com/cuda/cublas/index.html)
+
+Specific Functions to note are:
+
+- [cublasXtDgemm()](http://docs.nvidia.com/cuda/cublas/index.html#cublasxt_gemm)
+- [cublasDgeam()](http://docs.nvidia.com/cuda/cublas/index.html#cublas-lt-t-gt-geam)
+
+The Test subdirectory makes use of [google-benchmark](https://github.com/google/benchmark) to benchmark running time of these functions and the default CPU 
 
