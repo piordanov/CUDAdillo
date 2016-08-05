@@ -55,10 +55,13 @@ The Test subdirectory makes use of [google-benchmark](https://github.com/google/
 #Future Work
 - Transpose currently fails on non-square inputs, and covMat fails to get any correct output.
 
-- Matrix multiply is still slower than CPU version alone. Is memory bandwidth an issue?
+- Matrix multiply and addition is still slower than CPU version alone. Is memory bandwidth an issue?
 -- Some links worth looking at:
 -- <http://www.cs.cmu.edu/afs/cs/academic/class/15869-f11/www/readings/fatahalian04_gpumatmat.pdf>
 -- <http://stackoverflow.com/questions/2952277/when-is-a-program-limited-by-the-memory-bandwidth>
 -- <http://pertsserver.cs.uiuc.edu/~mcaccamo/papers/private/IEEE_TC_journal_submitted_C.pdf>
 
 - Implement a function to multiply a matrix by its transpose
+- look at other benchmarking tools to gather more information on memory bandwidth
+-- [STREAM](http://www.cs.virginia.edu/stream/ref.html)
+-- NVIDIA Visual Profiler
