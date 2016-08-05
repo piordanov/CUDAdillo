@@ -48,21 +48,58 @@ void cublasdestroy()
 }
 
 template <typename T>
-__global__ void _addGPUKernel(const T * A, const T * B, T * R, int numRows, int numCols)
+void _gpu_blas_add(const T *A, const T *B, T * C, const int rows, const int cols)
+{ }
+
+template <>
+void _gpu_blas_add<float>(const float *A, const float *B, float *R, const int rows, const int cols)
 {
-    int bx = blockIdx.x;
-    int by = blockIdx.y;
-    int tx = threadIdx.x;
-    int ty = threadIdx.y;
+    const int lda=cols,ldb=cols,ldc=cols;
+    const float alf = 1;
+    const float bet = 1;
+    const float *alpha = &alf;
+    const float *beta = &bet;
 
-    int row = by * blockDim.y + ty;
-    int col = bx * blockDim.x + tx;
+    cublasStatus_t stat;
+    stat = cublasSgeam(handle,
+                       CUBLAS_OP_N, CUBLAS_OP_N,
+                       rows, cols,
+                       alpha,
+                       A, lda,
+                       beta,
+                       B, ldb,
+                       R, ldc);
 
-    int index = row * numCols + col;
-    //printf(" %f ",A[index]);
-    if(row < numRows && col < numCols)
+    cudaDeviceSynchronize();
+    if(stat != CUBLAS_STATUS_SUCCESS)
     {
-        R[index] = A[index] + B[index];
+        printf("Sgeam failed with error code: %s\n", cublasGetErrorString(stat));
+    }
+
+}
+template <>
+void _gpu_blas_add<double>(const double *A, const double *B, double *R, const int rows, const int cols)
+{
+    const int lda=cols,ldb=cols,ldc=cols;
+    const double alf = 1;
+    const double bet = 1;
+    const double *alpha = &alf;
+    const double *beta = &bet;
+
+    cublasStatus_t stat;
+    stat = cublasDgeam(handle,
+                       CUBLAS_OP_N, CUBLAS_OP_N,
+                       rows, cols,
+                       alpha,
+                       A, lda,
+                       beta,
+                       B, ldb,
+                       R, ldc);
+
+    cudaDeviceSynchronize();
+    if(stat != CUBLAS_STATUS_SUCCESS)
+    {
+        printf("Dgeam failed with error code: %s\n", cublasGetErrorString(stat));
     }
 
 }
@@ -88,10 +125,10 @@ T* addGPU(T *A, T *B, int numRows, int numCols)
     dim3 dimGrid((int) ceil(numCols/TILE_WIDTH), (int)ceil(numRows/TILE_WIDTH), 1);
     dim3 dimBlock((int) TILE_WIDTH, (int) TILE_WIDTH, 1);
 
-    _addGPUKernel<T><<<dimGrid, dimBlock>>>(deviceA, deviceB, deviceR, numRows, numCols);
+    _gpu_blas_add(deviceA, deviceB, deviceR, numRows, numCols);
     cudaDeviceSynchronize();
 
-    (cudaMemcpy(result, deviceR, size * sizeof(T),cudaMemcpyDeviceToHost));
+    cudaMemcpy(result, deviceR, size * sizeof(T),cudaMemcpyDeviceToHost);
 
     cudaFree(deviceA);
     cudaFree(deviceB);
