@@ -1,9 +1,8 @@
-## CUDAdillo
+# CUDAdillo
 
 A static c++ library to complete basic matrix operations on Armadillo matrices with the intent to speed up runtime through the use of the CUDA and cuBLAS GPU libraries.
 
-##Qt Creator Integration
------
+###Qt Creator Integration
 - Have the `cudadillo.h` file in the same working directory
 - Have the compiled `libCUDAdillo.a` in the project, preferably a Libraries folder
 - Then include the following in the project's .pro file
@@ -21,8 +20,7 @@ macx{
 #include "cudadillo.h"
 ```
 
-##Examples
------
+###Examples
 ```cpp
 mat matA = randu<mat>(5,5);
 mat matB = randu<mat>(5,5);
@@ -44,8 +42,7 @@ delete cov;
 
 Note that these functions allocate heap memory to create these new matrices, so they **must be freed by the user**, and the functions assume that the inputs share the same dimensions.
 
-##References
------
+###References
 [cuBLAS Documentation](http://docs.nvidia.com/cuda/cublas/index.html)
 
 Specific Functions to note are:
@@ -55,3 +52,13 @@ Specific Functions to note are:
 
 The Test subdirectory makes use of [google-benchmark](https://github.com/google/benchmark) to benchmark running time of these functions and the default CPU operations.
 
+###Future Work
+- Transpose currently fails on non-square inputs, and covMat fails to get any correct output.
+
+- Matrix multiply is still slower than CPU version alone. Is memory bandwidth an issue?
+-- Some links worth looking at:
+-- <http://www.cs.cmu.edu/afs/cs/academic/class/15869-f11/www/readings/fatahalian04_gpumatmat.pdf>
+-- <http://stackoverflow.com/questions/2952277/when-is-a-program-limited-by-the-memory-bandwidth>
+-- <http://pertsserver.cs.uiuc.edu/~mcaccamo/papers/private/IEEE_TC_journal_submitted_C.pdf>
+
+- Implement a function to multiply a matrix by its transpose
