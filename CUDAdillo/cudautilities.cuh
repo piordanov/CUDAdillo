@@ -28,6 +28,25 @@ const char* cublasGetErrorString(cublasStatus_t status)
     return "unknown error";
 }
 
+cublasXtHandle_t xthandle;
+cublasHandle_t handle;
+
+void cublasinit()
+{
+    cublasXtCreate(&xthandle);
+    int devices[1] = { 0 };
+    cublasXtDeviceSelect(xthandle, 1, devices);
+
+    cublasCreate_v2(&handle);
+    cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST);
+}
+
+void cublasdestroy()
+{
+    cublasXtDestroy(xthandle);
+    cublasDestroy(handle);
+}
+
 template <typename T>
 __global__ void _addGPUKernel(const T * A, const T * B, T * R, int numRows, int numCols)
 {
@@ -93,12 +112,8 @@ void _gpu_blas_mmul<float>(const float *A, const float *B, float * C, const int 
     const float *alpha = &alf;
     const float *beta = &bet;
 
-    cublasXtHandle_t handle;
-    cublasXtCreate(&handle);
-    int devices[1] = { 0 };
-    cublasXtDeviceSelect(handle, 1, devices);
     cublasStatus_t stat;
-    stat = cublasXtSgemm(handle,CUBLAS_OP_N, CUBLAS_OP_N, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+    stat = cublasXtSgemm(xthandle,CUBLAS_OP_N, CUBLAS_OP_N, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
 
     cudaDeviceSynchronize();
     if(stat != CUBLAS_STATUS_SUCCESS)
@@ -106,7 +121,6 @@ void _gpu_blas_mmul<float>(const float *A, const float *B, float * C, const int 
         printf("Dgemm failed with error code: %s\n", cublasGetErrorString(stat));
     }
 
-    cublasXtDestroy(handle);
 }
 
 template <>
@@ -118,12 +132,9 @@ void _gpu_blas_mmul<double>(const double *A, const double *B, double * C, const 
     const double *alpha = &alf;
     const double *beta = &bet;
 
-    cublasXtHandle_t handle;
-    cublasXtCreate(&handle);
-    int devices[1] = { 0 };
-    cublasXtDeviceSelect(handle, 1, devices);
+
     cublasStatus_t stat;
-    stat = cublasXtDgemm(handle,CUBLAS_OP_N, CUBLAS_OP_N, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+    stat = cublasXtDgemm(xthandle,CUBLAS_OP_N, CUBLAS_OP_N, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
 
     cudaDeviceSynchronize();
     if(stat != CUBLAS_STATUS_SUCCESS)
@@ -131,7 +142,6 @@ void _gpu_blas_mmul<double>(const double *A, const double *B, double * C, const 
         printf("Dgemm failed with error code: %s\n", cublasGetErrorString(stat));
     }
 
-    cublasXtDestroy(handle);
 }
 
 
@@ -168,40 +178,45 @@ void _gpu_blas_trans(const T *A, T *B, const int m, const int k)
 { }
 
 template <>
-void _gpu_blas_trans<double>(const double *M, double *R, const int m, const int k)
+void _gpu_blas_trans<double>(const double *M, double *R, const int rows, const int cols)
 {
-    const int lda=m,ldb=k,ldc=k;
     const double alf = 1.;
     const double bet = 0.;
-    cublasHandle_t handle;
-    cublasCreate(&handle);
 
     cublasStatus_t stat;
-    stat = cublasDgeam(handle, CUBLAS_OP_T, CUBLAS_OP_T, m, k, &alf, M, lda, &bet, M, ldb, R, ldc);
+    stat = cublasDgeam(handle, CUBLAS_OP_T, CUBLAS_OP_T,
+                       rows, cols,
+                       &alf,
+                       M, cols,
+                       &bet,
+                       M, cols,
+                       R, rows);
     cudaDeviceSynchronize();
     if(stat != CUBLAS_STATUS_SUCCESS)
     {
         printf("Dgeam failed with error code: %s", cublasGetErrorString(stat));
     }
-    cublasDestroy(handle);
+
 }
 template <>
-void _gpu_blas_trans<float>(const float *M, float *R, const int m, const int k)
+void _gpu_blas_trans<float>(const float *M, float *R, const int rows, const int cols)
 {
-    const int lda=m,ldb=k,ldc=k;
     const float alf = 1.;
     const float bet = 0.;
-    cublasHandle_t handle;
-    cublasCreate(&handle);
 
     cublasStatus_t stat;
-    stat = cublasSgeam(handle, CUBLAS_OP_T, CUBLAS_OP_T, m, k, &alf, M, lda, &bet, M, ldb, R, ldc);
+    stat = cublasSgeam(handle, CUBLAS_OP_T, CUBLAS_OP_T,
+                       rows, cols,
+                       &alf,
+                       M, cols,
+                       &bet,
+                       M, cols,
+                       R, rows);
     cudaDeviceSynchronize();
     if(stat != CUBLAS_STATUS_SUCCESS)
     {
         printf("Dgeam failed with error code: %s", cublasGetErrorString(stat));
     }
-    cublasDestroy(handle);
 }
 
 
@@ -239,22 +254,13 @@ void _gpu_blas_cov<double>(const double *A, const double *B, double *R, const in
     const double alf = 1.;
     const double bet = 1.;
     cublasStatus_t stat;
-    cublasXtHandle_t handle;
-    stat = cublasXtCreate(&handle);
-    int devices[1] = { 0 };
-    cublasXtDeviceSelect(handle, 1, devices);
-    if (stat != CUBLAS_STATUS_SUCCESS) {
-        printf ("CUBLAS initialization failed with error code: %s\n", cublasGetErrorString(stat));
-        return;
-    }
 
-    stat = cublasXtDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_T, m, k, k, &alf, A, lda, B, ldb, &bet, R, ldc);
+    stat = cublasXtDgemm(xthandle, CUBLAS_OP_N, CUBLAS_OP_T, m, k, k, &alf, A, lda, B, ldb, &bet, R, ldc);
     cudaDeviceSynchronize();
     if(stat != CUBLAS_STATUS_SUCCESS)
     {
         printf("Dgemm failed with error code: %s\n", cublasGetErrorString(stat));
     }
-    cublasXtDestroy(handle);
 }
 template <>
 void _gpu_blas_cov<float>(const float *A, const float *B, float *R, const int m, const int k)
@@ -263,22 +269,13 @@ void _gpu_blas_cov<float>(const float *A, const float *B, float *R, const int m,
     const float alf = 1.;
     const float bet = 1.;
     cublasStatus_t stat;
-    cublasXtHandle_t handle;
-    stat = cublasXtCreate(&handle);
-    int devices[1] = { 0 };
-    cublasXtDeviceSelect(handle, 1, devices);
-    if (stat != CUBLAS_STATUS_SUCCESS) {
-        printf ("CUBLAS initialization failed with error code: %s\n", cublasGetErrorString(stat));
-        return;
-    }
 
-    stat = cublasXtSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_T, m, k, k, &alf, A, lda, B, ldb, &bet, R, ldc);
+    stat = cublasXtSgemm(xthandle, CUBLAS_OP_N, CUBLAS_OP_T, m, k, k, &alf, A, lda, B, ldb, &bet, R, ldc);
     cudaDeviceSynchronize();
     if(stat != CUBLAS_STATUS_SUCCESS)
     {
         printf("Dgemm failed with error code: %s\n", cublasGetErrorString(stat));
     }
-    cublasXtDestroy(handle);
 }
 
 

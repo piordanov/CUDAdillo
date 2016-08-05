@@ -12,10 +12,21 @@ template <typename T>
 T * transposeGPUcuBLAS(T *, int, int);
 template<typename T>
 T * covGPUcuBLAS(T *, T *, int, int);
+void cublasinit();
+void  cublasdestroy();
 
 class CUDAdillo
 {
 public:
+    static void init()
+    {
+        cublasinit();
+    }
+    static void destroy()
+    {
+        cublasdestroy();
+    }
+
     template<typename T>
     static Mat<T> * addMat(Mat<T> * A, Mat<T> * B)
     {

@@ -10,9 +10,9 @@ using namespace arma;
 using json = nlohmann::json;
 
 #define BASIC_BENCHMARK_TEST(x) \
-    BENCHMARK(x)->Range(512,8<<10)->Unit(benchmark::kMillisecond)
+    BENCHMARK(x)->Range(512,8<<10)->Unit(benchmark::kMicrosecond)
 
-static void BM_matrixAdditionCPU(benchmark::State& state) {
+static void BM_mAdditionCPU(benchmark::State& state) {
     int n = int(state.range_x());
     fmat matA(n,n);
     matA.fill(5);
@@ -22,20 +22,22 @@ static void BM_matrixAdditionCPU(benchmark::State& state) {
         fmat temp = matA + matB;
 }
 
-BASIC_BENCHMARK_TEST(BM_matrixAdditionCPU);
+BASIC_BENCHMARK_TEST(BM_mAdditionCPU);
 
-static void BM_matrixAdditionGPU(benchmark::State& state) {
+static void BM_mAdditionGPU(benchmark::State& state) {
     int n = int(state.range_x());
     fmat matA(n,n);
     matA.fill(5);
     fmat matB(n,n);
     matB.fill(7);
+    CUDAdillo::init();
     while (state.KeepRunning())
         CUDAdillo::addMat<float>(&matA,&matB);
+    CUDAdillo::destroy();
 }
-BASIC_BENCHMARK_TEST(BM_matrixAdditionGPU);
+BASIC_BENCHMARK_TEST(BM_mAdditionGPU);
 
-static void BM_matrixMultiplyCPU(benchmark::State& state) {
+static void BM_mMultiplyCPU(benchmark::State& state) {
     int n = int(state.range_x());
     fmat matA(n,n);
     matA.fill(5);
@@ -44,22 +46,24 @@ static void BM_matrixMultiplyCPU(benchmark::State& state) {
     while (state.KeepRunning())
         fmat temp = matA * matB;
 }
-BASIC_BENCHMARK_TEST(BM_matrixMultiplyCPU);
+BASIC_BENCHMARK_TEST(BM_mMultiplyCPU);
 
-static void BM_matrixMultiplyGPU(benchmark::State & state) {
+static void BM_mMultiplyGPU(benchmark::State & state) {
     int n = int(state.range_x());
     fmat matA(n,n);
     matA.fill(5);
     fmat matB(n,n);
     matB.fill(7);
+    CUDAdillo::init();
     while (state.KeepRunning())
     {
         CUDAdillo::multMat<float>(&matA,&matB);
     }
+    CUDAdillo::destroy();
 }
-BASIC_BENCHMARK_TEST(BM_matrixMultiplyGPU);
+BASIC_BENCHMARK_TEST(BM_mMultiplyGPU);
 
-static void BM_matrixTransposeCPU(benchmark::State & state) {
+static void BM_mTransposeCPU(benchmark::State & state) {
     int n = int(state.range_x());
     fmat matA = randu<fmat>(n,n);
     while(state.KeepRunning())
@@ -67,39 +71,43 @@ static void BM_matrixTransposeCPU(benchmark::State & state) {
         fmat temp = matA.t();
     }
 }
-BASIC_BENCHMARK_TEST(BM_matrixTransposeCPU);
+BASIC_BENCHMARK_TEST(BM_mTransposeCPU);
 
-static void BM_matrixTransposeGPU(benchmark::State & state) {
+static void BM_mTransposeGPU(benchmark::State & state) {
     int n = int(state.range_x());
     fmat matA = randu<fmat>(n,n);
+    CUDAdillo::init();
     while(state.KeepRunning())
     {
         CUDAdillo::transposeMat<float>(&matA);
     }
+    CUDAdillo::destroy();
 }
-BASIC_BENCHMARK_TEST(BM_matrixTransposeGPU);
+BASIC_BENCHMARK_TEST(BM_mTransposeGPU);
 
-static void BM_matrixCovCPU(benchmark::State & state) {
-    int n = int(state.range_x());
-    fmat matA = randu<fmat>(n,n);
-    fmat matB = randu<fmat>(n,n);
-    while(state.KeepRunning())
-    {
-        fmat temp = matA * matB.t();
-    }
-}
-BASIC_BENCHMARK_TEST(BM_matrixCovCPU);
+//static void BM_mCovCPU(benchmark::State & state) {
+//    int n = int(state.range_x());
+//    fmat matA = randu<fmat>(n,n);
+//    fmat matB = randu<fmat>(n,n);
+//    while(state.KeepRunning())
+//    {
+//        fmat temp = matA * matB.t();
+//    }
+//}
+//BASIC_BENCHMARK_TEST(BM_mCovCPU);
 
-static void BM_matrixCovGPU(benchmark::State & state) {
-    int n = int(state.range_x());
-    fmat matA = randu<fmat>(n,n);
-    fmat matB = randu<fmat>(n,n);
-    while(state.KeepRunning())
-    {
-        CUDAdillo::covMat<float>(&matA,&matB);
-    }
-}
-BASIC_BENCHMARK_TEST(BM_matrixCovGPU);
+//static void BM_mCovGPU(benchmark::State & state) {
+//    int n = int(state.range_x());
+//    fmat matA = randu<fmat>(n,n);
+//    fmat matB = randu<fmat>(n,n);
+//    CUDAdillo::init();
+//    while(state.KeepRunning())
+//    {
+//        CUDAdillo::covMat<float>(&matA,&matB);
+//    }
+//    CUDAdillo::destroy();
+//}
+//BASIC_BENCHMARK_TEST(BM_mCovGPU);
 
 
 template <typename T>
@@ -213,13 +221,14 @@ int main(int argc, char *argv[])
 
 //    std::cout.rdbuf(coutbuf);
 //    std::cout << benchmarks.str();
+    CUDAdillo::init();
 
     test_addition();
     test_multiply();
     test_transpose();
     test_cov();
 
-
+    CUDAdillo::destroy();
     //    auto j =  json::parse(benchmarks.str());
     //    auto benchmks = j["benchmarks"];
 
